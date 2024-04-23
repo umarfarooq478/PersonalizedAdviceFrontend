@@ -125,7 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   function fetchStudentInformation(studentId) {
-    fetch(` https://cors-everywhere.herokuapp.com/http://personalized-advice-env.eba-jbebcep6.us-east-1.elasticbeanstalk.com/students/${studentId}`)
+    fetch(`https://proxy.cors.sh/http://personalized-advice-env.eba-jbebcep6.us-east-1.elasticbeanstalk.com/students/${studentId}`,{
+     headers: {
+  'x-cors-api-key': 'temp_111f9b789b4e1636b593da5d0e2e4123'
+  }})
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
