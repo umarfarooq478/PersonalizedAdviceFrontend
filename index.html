@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personalized AI Study Advice Generator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+  }
+  .header {
+    background-color: #4caf50;
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    font-size: 24px;
+    border-bottom: 1px solid #ccc;
+  }
+  .chat-container {
+    width: 80%;
+    height: 100vh;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: scroll;
+  }
+  .input-container {
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: flex-end;
+  }
+  .input-container input[type="text"],
+  .input-container input[type="submit"] {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  .input-container input[type="submit"] {
+    margin-left: 10px;
+    background-color: #4caf50;
+    color: #fff;
+    cursor: pointer;
+  }
+  .loader {
+    border: 4px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 4px solid #3498db;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    display: none;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  .cleared {
+    background-color: #c8e6c9;
+  }
+  .failed {
+    background-color: #ffcdd2;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  Personalized AI Study Advice Generator
+</div>
+
+<div class="chat-container">
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="input-container">
+    <form id="studentForm" style="width: 100%;">
+      <input type="text" id="studentId" placeholder="Enter Student ID">
+      <input type="submit" value="Submit">
+      <div class="loader" id="loader"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const chatMessages = document.getElementById('chat-messages');
+  const studentForm = document.getElementById('studentForm');
+  const loader = document.getElementById('loader');
+
+  studentForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const studentId = document.getElementById('studentId').value;
+    if (studentId.trim() !== '') {
+      loader.style.display = 'block';
+      fetchStudentInformation(studentId);
+    } else {
+      displayBotMessage("Please enter a valid student ID.");
+    }
+  });
+
+  function fetchStudentInformation(studentId) {
+    fetch(`http://personalized-advice-env.eba-jbebcep6.us-east-1.elasticbeanstalk.com/students/${studentId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        displayStudentInformation(data);
+        loader.style.display = 'none';
+      })
+      .catch(error => {
+        displayBotMessage("An error occurred while fetching student information. Please try again later.");
+        loader.style.display = 'none';
+      });
+  }
+
+  function displayStudentInformation(studentData) {
+    const advice = studentData.personalizedAdvice;
+    const courses = studentData.studentData.courseRegistrations;
+    const message = `
+      <div class="bot-message">
+        <p>${advice}</p>
+        <table>
+          <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Department</th>
+            <th>Status</th>
+          </tr>
+          ${courses.map(course => `
+            <tr class="${getCourseStatusClass(course.status)}">
+              <td>${course.course.course_name}</td>
+              <td>${course.course.course_description}</td>
+              <td>${course.course.course_department}</td>
+              <td>${course.status}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    `;
+    chatMessages.innerHTML += message;
+  }
+
+  function displayBotMessage(message) {
+    const botMessage = `
+      <div class="bot-message">
+        <p>${message}</p>
+      </div>
+    `;
+    chatMessages.innerHTML += botMessage;
+  }
+
+  function getCourseStatusClass(status) {
+    if (status === 'Cleared') {
+      return 'cleared';
+    } else if (status === 'Failed') {
+      return 'failed';
+    } else {
+      return '';
+    }
+  }
+});
+</script>
+
+</body>
+</html>
